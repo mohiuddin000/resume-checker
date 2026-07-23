@@ -1,55 +1,83 @@
-import bcrypt from 'bcrypt';
-import mongoose from 'mongoose';
+import bcrypt from "bcrypt";
+import mongoose from "mongoose";
 
 const userSchema = new mongoose.Schema(
-  {
-    name: {
-      type: String,
-      required: [true, 'Name is required.'],
-      trim: true,
-      minlength: [2, 'Name must be at least 2 characters long.'],
-      maxlength: [100, 'Name cannot exceed 100 characters.'],
+    {
+        name: {
+            type: String,
+            required: [true, "Name is required."],
+            trim: true,
+            minlength: [2, "Name must be at least 2 characters long."],
+            maxlength: [100, "Name cannot exceed 100 characters."],
+        },
+        role: {
+            type: String,
+            enum: ["user", "admin"],
+            default: "user",
+        },
+        email: {
+            type: String,
+            required: [true, "Email is required."],
+            unique: true,
+            lowercase: true,
+            trim: true,
+            match: [
+                /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+                "Provide a valid email address.",
+            ],
+        },
+
+        password: {
+            type: String,
+            required: [true, "Password is required."],
+            minlength: [8, "Password must be at least 8 characters long."],
+            select: false,
+        },
+        passwordResetToken: {
+            type: String,
+            default: null,
+        },
+
+        passwordResetExpires: {
+            type: Date,
+            default: null,
+        },
+        isEmailVerified: {
+            type: Boolean,
+            default: false,
+        },
+
+        emailVerificationToken: {
+            type: String,
+        },
+
+        emailVerificationExpires: {
+            type: Date,
+        },
     },
-    email: {
-      type: String,
-      required: [true, 'Email is required.'],
-      unique: true,
-      lowercase: true,
-      trim: true,
-      match: [/^[^\s@]+@[^\s@]+\.[^\s@]+$/, 'Provide a valid email address.'],
+    {
+        timestamps: true,
+        toJSON: {
+            transform: (document, returnedObject) => {
+                delete returnedObject.password;
+                delete returnedObject.__v;
+                return returnedObject;
+            },
+        },
     },
-    password: {
-      type: String,
-      required: [true, 'Password is required.'],
-      minlength: [8, 'Password must be at least 8 characters long.'],
-      select: false,
-    },
-  },
-  {
-    timestamps: true,
-    toJSON: {
-      transform: (document, returnedObject) => {
-        delete returnedObject.password;
-        delete returnedObject.__v;
-        return returnedObject;
-      },
-    },
-  },
 );
 
-userSchema.pre('save', async function hashPassword(next) {
-  if (!this.isModified('password')) {
-    return next();
-  }
+userSchema.pre("save", async function () {
+    if (!this.isModified("password")) return;
 
-  this.password = await bcrypt.hash(this.password, 12);
-  return next();
+    const SALT_ROUNDS = Number(process.env.BCRYPT_SALT_ROUNDS) || 12;
+    this.password = await bcrypt.hash(this.password, SALT_ROUNDS);
 });
 
-userSchema.methods.comparePassword = async function comparePassword(candidatePassword) {
-  return bcrypt.compare(candidatePassword, this.password);
+userSchema.methods.comparePassword = async function (candidatePassword) {
+    return bcrypt.compare(candidatePassword, this.password);
 };
 
-const User = mongoose.model('User', userSchema);
+const User = mongoose.model("User", userSchema);
 
 export default User;

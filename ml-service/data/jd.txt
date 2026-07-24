@@ -1,0 +1,1 @@
+We are looking for a Backend Developer with experience in Python, Node.js, Express.js, MongoDB, REST APIs, Git, Docker and problem solving.

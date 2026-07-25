@@ -25,8 +25,8 @@ def score_resume(resume_text, job_description_text):
     extra_skills = sorted(resume_skills - job_description_skills)
 
     return {
-        "score": score,
-        "matching_skills": matching_skills,
-        "missing_skills": missing_skills,
-        "extra_skills": extra_skills
-    }
+    "score": float(score),
+    "matched_skills": matching_skills,
+    "missing_skills": missing_skills,
+    "extra_skills": extra_skills,
+}

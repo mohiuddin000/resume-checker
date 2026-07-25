@@ -4,8 +4,11 @@ import { errorHandler, notFound } from "./middleware/error.middleware.js";
 import authRouter from "./routes/auth.routes.js";
 import healthRouter from "./routes/healthRoutes.js";
 import cookieParser from "cookie-parser";
+import router from "./routes/resume.routes.js";
+import resumeRouter from "./routes/resume.routes.js";
 
 const app = express();
+app.use(cookieParser());
 
 const allowedOrigins = (process.env.CLIENT_URL || "http://localhost:5173")
     .split(",")
@@ -32,9 +35,9 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use("/api/health", healthRouter);
 app.use("/api/auth", authRouter);
+app.use("/api/resumes", resumeRouter);
 
 app.use(notFound);
 app.use(errorHandler);
-app.use(cookieParser());
 
 export default app;

@@ -13,17 +13,20 @@
 
 # print(f"Resume Score: {score}%")
 
-from fastapi import FastAPI, HTTPException
+import os
 
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException
+
+from app.config import APP_NAME, APP_VERSION, UPLOAD_DIR
 from app.logger import logger
-from app.models import ScoreRequest, ScoreResponse
+from app.models import ScoreResponse
+from app.parser import extract_text
 from app.preprocessing import clean_text
 from app.scorer import score_resume
-from app.config import APP_NAME, APP_VERSION
 
 app = FastAPI(
     title=APP_NAME,
-    version=APP_VERSION
+    version=APP_VERSION,
 )
 
 
@@ -31,44 +34,42 @@ app = FastAPI(
 def home():
     return {
         "status": "success",
-        "message": f"{APP_NAME} is running"
+        "message": f"{APP_NAME} is running",
     }
 
 
 @app.post("/score", response_model=ScoreResponse)
-def score(request: ScoreRequest):
+async def score(
+    resume: UploadFile = File(...),
+    job_description: str = Form(...),
+):
+
+    file_path = UPLOAD_DIR / resume.filename
 
     try:
 
-        if not request.resume_text.strip():
+        if resume.content_type != "application/pdf":
             raise HTTPException(
                 status_code=400,
-                detail="Resume text cannot be empty."
+                detail="Only PDF files are allowed.",
             )
 
-        if not request.jd_text.strip():
-            raise HTTPException(
-                status_code=400,
-                detail="Job description cannot be empty."
-            )
+        with open(file_path, "wb") as file:
+            file.write(await resume.read())
 
-        resume = clean_text(request.resume_text)
-        jd = clean_text(request.jd_text)
+        resume_text = clean_text(extract_text(file_path))
+        jd_text = clean_text(job_description)
 
-        result = score_resume(resume, jd)
+        result = score_resume(
+            resume_text,
+            jd_text,
+        )
 
         logger.info("Resume scored successfully.")
 
         return result
 
-    except HTTPException:
-        raise
+    finally:
 
-    except Exception as e:
-
-        logger.exception("Unexpected error while scoring resume.")
-
-        raise HTTPException(
-            status_code=500,
-            detail="Internal server error."
-        )
+        if os.path.exists(file_path):
+            os.remove(file_path)

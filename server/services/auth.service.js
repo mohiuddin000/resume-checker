@@ -31,6 +31,7 @@ function toSafeUser(user) {
         name: user.name,
         email: user.email,
         role: user.role,
+        isEmailVerified: user.isEmailVerified,
         createdAt: user.createdAt,
         updatedAt: user.updatedAt,
     };
@@ -52,7 +53,7 @@ export const register = async ({ name, email, password }) => {
 
     const user = await User.create({
         name: registrationInput.name.trim(),
-        email,
+        email: cleanedEmail,
         password: registrationInput.password,
     });
 
@@ -190,8 +191,6 @@ export const changePassword = async (userId, currentPassword, newPassword) => {
     user.password = newPassword;
 
     user.refreshTokens = [];
-    res.clearCookie("accessToken");
-
     await user.save();
 
     return {

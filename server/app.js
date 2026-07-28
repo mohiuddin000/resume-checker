@@ -4,7 +4,6 @@ import { errorHandler, notFound } from "./middleware/error.middleware.js";
 import authRouter from "./routes/auth.routes.js";
 import healthRouter from "./routes/healthRoutes.js";
 import cookieParser from "cookie-parser";
-import router from "./routes/resume.routes.js";
 import resumeRouter from "./routes/resume.routes.js";
 
 const app = express();
@@ -28,6 +27,7 @@ app.use(
             corsError.statusCode = 403;
             return callback(corsError);
         },
+        credentials: true,
     }),
 );
 console.log("Allowed origins:", allowedOrigins);

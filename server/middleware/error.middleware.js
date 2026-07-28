@@ -30,6 +30,6 @@ export function errorHandler(error, req, res, next) {
     res.status(statusCode).json({
         success: false,
         status,
-        message: error.message || "Internal Server Error",
+        message,
     });
 }

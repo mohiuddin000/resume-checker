@@ -12,29 +12,45 @@ import cookieOptions from "../utils/cookieOptions.js";
 import { forgotPassword } from "../services/auth.service.js";
 import sendEmail from "../utils/sendEmail.js";
 
-export const registerUser = asyncHandler(async (req, res) => {
-    //const data = await registerUser(req.body);
+// export const registerUser = asyncHandler(async (req, res) => {
 
-    const { user, token } = await register(req.body);
+//     //const data = await registerUser(req.body);
+
+//     const { user, token } = await register(req.body);
+
+//     res.cookie("token", token, cookieOptions);
+
+//     res.status(201).json({
+//         success: true,
+//         message: "Registration successful.",
+//         user,
+//     });
+// });
+
+export const registerUser = asyncHandler(async (req, res) => {
+    const { user, token, verificationToken } = await register(req.body);
 
     res.cookie("token", token, cookieOptions);
 
+    const verificationURL = `${process.env.CLIENT_URL}/verify-email/${verificationToken}`;
+
+    await sendEmail({
+        to: user.email,
+        subject: "Email Verification",
+        text: `Verify your email using this link:\n\n${verificationURL}\n\nThis link expires in 10 minutes.`,
+    });
+
     res.status(201).json({
         success: true,
-        message: "Registration successful.",
+        message:
+            "Registration successful. Please check your email to verify your account.",
         user,
     });
 });
-
 export const login = asyncHandler(async (req, res) => {
     const { user, token } = await loginUser(req.body);
 
-    res.cookie("token", token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
-        maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
+    res.cookie("token", token, cookieOptions);
 
     res.status(200).json({
         success: true,
@@ -54,11 +70,7 @@ export const getProfile = asyncHandler(async (req, res) => {
 });
 
 export const logout = asyncHandler(async (req, res) => {
-    res.clearCookie("token", {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
-    });
+    res.clearCookie("token", cookieOptions);
 
     res.status(200).json({
         success: true,
@@ -111,6 +123,8 @@ export const changePasswordController = asyncHandler(async (req, res) => {
         currentPassword,
         newPassword,
     );
+
+    res.clearCookie("token");
 
     res.status(200).json(result);
 });

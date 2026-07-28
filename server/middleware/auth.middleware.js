@@ -12,8 +12,6 @@ export const protect = asyncHandler(async (req, res, next) => {
 
     const token = bearerToken || req.cookies?.token;
 
-    console.log("Token from header or cookie:", token);
-
     if (!token) {
         throw new AppError("Authentication is required.", 401);
     }

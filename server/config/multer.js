@@ -1,6 +1,7 @@
 import multer from "multer";
 import path from "path";
 import fs from "fs";
+import { randomUUID } from "crypto";
 
 const uploadDir = "uploads";
 
@@ -14,8 +15,8 @@ const storage = multer.diskStorage({
     },
 
     filename(req, file, cb) {
-        const uniqueName = `${Date.now()}-${file.originalname}`;
-        cb(null, uniqueName);
+        // const uniqueName = `${Date.now()}-${file.originalname}`;
+        cb(null, `${randomUUID()}.pdf`);
     },
 });
 
